@@ -18,14 +18,17 @@ const MyTest = (function(){
   /**
    * @param {string} testName
    * @param {() => void} fn
-   * @param {(description:string) => void} loggingFn
+   * @param {(description:string) => void} onErrorLoggingFn
+   * @param {(description:string) => void} onSuccessLoggingFn
    */
-  function test(testName, fn, loggingFn = console.log) {
-      const message = createMesageOnFailureOrError(testName, fn);
-      if (message) {
-          loggingFn(message);
+  function test(testName, fn, onErrorLoggingFn = console.warn, onSuccessLoggingFn = console.log) {
+      const errorMessage = createMessageOnFailureOrError(testName, fn);
+      if (errorMessage) {
+        onErrorLoggingFn(errorMessage);
+      }else{
+        const successMessage = buildSuccessTestMessage(testName)
+        onSuccessLoggingFn(successMessage)
       }
-      return message;
   }
   /**
    * @param {unknown} theValueYouGot
@@ -41,7 +44,7 @@ const MyTest = (function(){
    * @param {string} testName
    * @param {() => void} testFunction
    */
-  function createMesageOnFailureOrError(testName, testFunction) {
+  function createMessageOnFailureOrError(testName, testFunction) {
       try {
           testFunction();
       }
@@ -53,6 +56,20 @@ const MyTest = (function(){
               return buildErrorMessage(testName, err);
           }
       }
+  }
+  /**
+   * @param {string} testName
+   * @param {string} errorMessage
+   */
+  function buildFailedTestMessage(testName, errorMessage) {
+      return `FAILED\nTest:${testName}\n${errorMessage}`;
+  }
+  /**
+   * @param {string} testName
+   * @param {string} errorMessage
+   */
+  function buildSuccessTestMessage(testName) {
+      return `PASSED\nTest:${testName}`;
   }
   /**
    * @param {string} testName
