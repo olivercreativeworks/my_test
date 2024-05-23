@@ -30,9 +30,9 @@ function testReturnsTwo(fn = returnsTwo){
 testReturnsTwo()
 ```
 
-By default, only descriptions and failed test results are logged. The default logging function is console.log, but this can be changed via the third argument to describe and/or test. 
+By default, only descriptions and failed test results are logged. The default logging functions are is console.log and console.warn. The logging functions can be changed via arguments to describe and test.
 
 Please note the following:
-  - The description is always logged (first argument of the describe function)
-  - If your test fails, an error will be thrown. That error will be logged along with the first argument of the test function.
-  - Passing tests will not log anything (i.e. no test name will be logged)
+  - The description is always logged (first argument of the describe function).
+  - If your test fails, an error will be thrown. The error will be logged along with: the test's name (i.e. first argument of the test function), the value passed into the expect function, and the expeced value.
+  - Passing tests will only log the test name.
