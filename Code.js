@@ -1,105 +1,111 @@
-const MyTest = (function(){
+/**
+ * Creates a wrapper around your test function. It logs the description and runs the fn (i.e your test function.) You can run multiple tests in your fn and use this describe function to group them together.
+ * @param {string} description A description for a group of tests.
+ * @param {() => void} fn The function that will be called to run the group of tests.
+ * @param {(description:string) => void} loggingFn A function to log input description.
+ */
+function describe(description, fn, loggingFn = console.log) {
+    loggingFn(description);
+    fn();
+}
 
+/**
+ * Creates a wrapper around your tests. It logs a success message if the test passes (i.e. does not throw) and logs an error message if the test fails (i.e throws an error).
+ * 
+ * To test a method that you expect to throw an error, set up a try catch block in your test function to catch the error and return true if the error was what you expected.
+ * @param {string} testName A name or description for your test.
+ * @param {() => void} fn The function that will be called to run the test.
+ * @param {(description:string) => void} onErrorLoggingFn A function to log error messages.
+ * @param {(description:string) => void} onSuccessLoggingFn A function to log a success message.
+ */
+function test(testName, fn, onErrorLoggingFn = console.warn, onSuccessLoggingFn = console.log) {
+    const errorMessage = createMessageOnFailureOrError_(testName, fn);
+    if (errorMessage) {
+      onErrorLoggingFn(errorMessage);
+    }else{
+      const successMessage = buildSuccessTestMessage_(testName)
+      onSuccessLoggingFn(successMessage)
+    }
+}
+
+/**
+ * Use this in the test function to evaluate whether your functions are returning the results you expect. Returns an object to test equality against theValueYouGot. If the test is true, the function returns undefined. If the test is false, the function throws an error.
+ * @param {unknown} theValueYouGot The value you want to test.
+ * @return {{toEqual:(theValueYouExpect:unknown) => void, toBeNull:() => void, toBeUndefined:() => void}}
+ */
+function expect(theValueYouGot) {
   return {
-    describe,
-    test,
-    expect
-  }
+      toEqual: (theValueYouExpect) => testEquality_(theValueYouGot, theValueYouExpect),
+      toBeNull: () => testEquality_(theValueYouGot, null),
+      toBeUndefined: () => testEquality_(theValueYouGot, undefined)
+  };
+}
 
-  /**
-   * @param {string} description
-   * @param {() => void} fn
-   * @param {(description:string) => void} loggingFn
-   */
-  function describe(description, fn, loggingFn = console.log) {
-      loggingFn(description);
-      fn();
-  }
-  /**
-   * @param {string} testName
-   * @param {() => void} fn
-   * @param {(description:string) => void} onErrorLoggingFn
-   * @param {(description:string) => void} onSuccessLoggingFn
-   */
-  function test(testName, fn, onErrorLoggingFn = console.warn, onSuccessLoggingFn = console.log) {
-      const errorMessage = createMessageOnFailureOrError(testName, fn);
-      if (errorMessage) {
-        onErrorLoggingFn(errorMessage);
-      }else{
-        const successMessage = buildSuccessTestMessage(testName)
-        onSuccessLoggingFn(successMessage)
-      }
-  }
-  /**
-   * @param {unknown} theValueYouGot
-   */
-  function expect(theValueYouGot) {
-      return {
-          toEqual: /** @param {unknown} theValueYouExpect */ (theValueYouExpect) => testEquality(theValueYouGot, theValueYouExpect),
-          toBeNull: () => testEquality(theValueYouGot, null),
-          toBeUndefined: () => testEquality(theValueYouGot, undefined)
-      };
-  }
-  /**
-   * @param {string} testName
-   * @param {() => void} testFunction
-   */
-  function createMessageOnFailureOrError(testName, testFunction) {
-      try {
-          testFunction();
-      }
-      catch (/** @type {Error} */ err) {
-          if (err instanceof FailedTestError) {
-              return buildFailedTestMessage(testName, `${err.stack}`.replace(`${err.name}:`, "").trim());
-          }
-          else {
-              return buildErrorMessage(testName, err);
-          }
-      }
-  }
-  /**
-   * @param {string} testName
-   * @param {string} errorMessage
-   */
-  function buildFailedTestMessage(testName, errorMessage) {
-      return `FAILED\nTest:${testName}\n${errorMessage}`;
-  }
-  /**
-   * @param {string} testName
-   * @param {string} errorMessage
-   */
-  function buildSuccessTestMessage(testName) {
-      return `PASSED\nTest:${testName}`;
-  }
-  /**
-   * @param {string} testName
-   * @param {string} errorMessage
-   */
-  function buildFailedTestMessage(testName, errorMessage) {
-      return `FAILED\nTest:${testName}\n${errorMessage}`;
-  }
-  /**
-   * @param {string} testName
-   * @param {string | Error} errorMessage
-   */
-  function buildErrorMessage(testName, errorMessage) {
-      return `ERROR\n${testName}\n${errorMessage}`;
-  }
-  /**
-   * @param {unknown} gotResult
-   * @param {unknown} expectedResult
-   */
-  function throwFailedTest(gotResult, expectedResult) {
-      throw new FailedTestError(gotResult, expectedResult);
-  }
-  /**
-   * @param {unknown} gotResult
-   * @param {unknown} expectedResult
-   */
-  function testEquality(gotResult, expectedResult) {
-      return areEqual(gotResult, expectedResult) ? undefined : throwFailedTest(gotResult, expectedResult);
-  }
-})()
+/**
+ * @param {string} testName
+ * @param {() => void} testFunction
+ */
+function createMessageOnFailureOrError_(testName, testFunction) {
+    try {
+        testFunction();
+    }
+    catch (/** @type {Error} */ err) {
+        if (err instanceof FailedTestError) {
+            return buildFailedTestMessage_(testName, `${err.stack}`.replace(`${err.name}:`, "").trim());
+        }
+        else {
+            return buildErrorMessage_(testName, err);
+        }
+    }
+}
+
+/**
+ * @param {string} testName
+ * @param {string} errorMessage
+ */
+function buildFailedTestMessage_(testName, errorMessage) {
+    return `FAILED\nTest:${testName}\n${errorMessage}`;
+}
+
+/**
+ * @param {string} testName
+ * @param {string} errorMessage
+ */
+function buildSuccessTestMessage_(testName) {
+    return `PASSED\nTest:${testName}`;
+}
+
+/**
+ * @param {string} testName
+ * @param {string} errorMessage
+ */
+function buildFailedTestMessage_(testName, errorMessage) {
+    return `FAILED\nTest:${testName}\n${errorMessage}`;
+}
+
+/**
+ * @param {string} testName
+ * @param {string | Error} errorMessage
+ */
+function buildErrorMessage_(testName, errorMessage) {
+    return `ERROR\n${testName}\n${errorMessage}`;
+}
+
+/**
+ * @param {unknown} gotResult
+ * @param {unknown} expectedResult
+ */
+function throwFailedTest_(gotResult, expectedResult) {
+    throw new FailedTestError(gotResult, expectedResult);
+}
+
+/**
+ * @param {unknown} gotResult
+ * @param {unknown} expectedResult
+ */
+function testEquality_(gotResult, expectedResult) {
+    return areEqual(gotResult, expectedResult) ? undefined : throwFailedTest_(gotResult, expectedResult);
+}
 
 /**
  * @typedef {Error} FailedTestError
@@ -117,6 +123,7 @@ class FailedTestError {
 }
 
 /**
+ * Tests whether two values are the same.
  * @param {unknown} x
  * @param {unknown} y
  */
